@@ -42,13 +42,14 @@ $sconfig = array(
 $spotify = new spotifly($sconfig);
 
 
-
+//Start a login
 if(!isset($_SESSION["spotify"]["login"]) || $_SESSION["spotify"]["login"]!=true){
 	$loginUrl = $spotify->login();//if you need a state you can define here.
 	echo "<a href='$loginUrl'>Login with spotify</a>";
 
 }else{
 
+	//If login succesfully done then get auth.
 	if(!$_SESSION["spotify"]["auth"]){
 		$authurl = $callbackurl."?get=auth";
 
@@ -56,9 +57,11 @@ if(!isset($_SESSION["spotify"]["login"]) || $_SESSION["spotify"]["login"]!=true)
 		echo "<a href='$authurl'>GET Auth</a>\n";
 	}
 
+	//Auth Process
 	if(isset($_GET["get"]) && $_GET["get"]=="auth" && !$_SESSION["spotify"]["auth"]){
 		$authresult = $spotify->auth();
 
+	//Auth is OK, get user info
 	}elseif($_SESSION["spotify"]["auth"]){
 		$user = $spotify->getUser();
 		echo parseSpotifyUser($user);
@@ -73,6 +76,7 @@ if(!isset($_SESSION["spotify"]["login"]) || $_SESSION["spotify"]["login"]!=true)
 
 
 
+//Simple user info parser.
 function parseSpotifyUser($user){
 
 	$flag = '<img src="blank.gif" class="flag flag-'.strtolower($user["country"]).'" alt="'.$user["country"].'" />';
@@ -101,6 +105,7 @@ function parseSpotifyUser($user){
 
 
 <style type="text/css">
+/* To show user's country flag. */
 	.flag {
 	width: 16px;
 	height: 11px;

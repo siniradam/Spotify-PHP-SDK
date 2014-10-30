@@ -2,13 +2,14 @@
 You can get spotify authentication with this simple php library.
 
 Feel free to use. Under MIT Licence
-Do anything with öy code as long as you provide attribution back to me :)
-
+Do anything with my code as long as you provide attribution back to me :)
 
 
 ## Before start ##
-Dont forget to set $callbackurl value!
-
+Set these values in index.php;
+* $callbackurl - Must match with your callback url defined in Dev.spotify
+* clientsecret
+* clientid
 
 [OhShift](www.ohshiftlabs.com)
 
