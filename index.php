@@ -19,7 +19,6 @@ Under MIT licence
 ************2014*******
 * Spotify PHP Class ***
 ** Free Distribution **
----- v1.0 -------------
 **********************/
 
 ini_set('display_errors',true);
@@ -33,13 +32,14 @@ $callbackurl = "http://127.0.0.1/~koray/dev/spotifly/";
 //This must match with Redirect URIs defined at https://developer.spotify.com/my-applications
 
 $sconfig = array(
-	"clientid"		=> "80b76a99092f4337a700e731eaca674f",
-	"clientsecret"	=> "a67145599a3c4ea88678037aa1850c00",
+	"clientid"		=> "",
+	"clientsecret"	=> "",
 	"callbackurl"	=> $callbackurl/*,
 	"scope"			=> "user-read-private,user-read-email"*/
 );
 
 $spotify = new spotifly($sconfig);
+
 
 
 //Start a login
@@ -60,15 +60,40 @@ if(!isset($_SESSION["spotify"]["login"]) || $_SESSION["spotify"]["login"]!=true)
 	//Auth Process
 	if(isset($_GET["get"]) && $_GET["get"]=="auth" && !$_SESSION["spotify"]["auth"]){
 		$authresult = $spotify->auth();
+	}
 
 	//Auth is OK, get user info
-	}elseif($_SESSION["spotify"]["auth"]){
+	if($_SESSION["spotify"]["auth"] || isset($authresult["access_token"]) ){
+
 		$user = $spotify->getUser();
-		echo parseSpotifyUser($user);
 
-	}else{
-		echo "Something wrong.";
+		echo "\n";
+		echo "<a href='?refreshtoken=yes'>Refresh Token</a> ";
+		echo "<a href='?endpoint=browse/featured-playlists'>Featured Playlists</a> ";
+		echo "<a href='?endpoint=me/tracks'>My Tracks</a>\n\n";
 
+		if(!isset($user["error"])){
+			echo parseSpotifyUser($user);			
+		}else{
+			echo $user["error"]["message"];
+		}
+
+
+	}
+
+
+	//EndPointTest
+
+	if(isset($_GET["endpoint"])){
+		$data = $spotify->endPointData($_GET["endpoint"]);
+		print_r($data);
+	}
+
+
+	//Refresh Token
+	if(isset($_GET["refreshtoken"])){
+		$refresh = $spotify->refreshToken();
+		print_r($refresh);
 	}
 
 }
@@ -79,21 +104,25 @@ if(!isset($_SESSION["spotify"]["login"]) || $_SESSION["spotify"]["login"]!=true)
 //Simple user info parser.
 function parseSpotifyUser($user){
 
-	$flag = '<img src="blank.gif" class="flag flag-'.strtolower($user["country"]).'" alt="'.$user["country"].'" />';
+	if(is_array($user) && isset($user["display_name"])){
+		$flag = '<img src="https://upload.wikimedia.org/wikipedia/commons/c/c0/Blank.gif" class="flag flag-'.strtolower($user["country"]).'" alt="'.$user["country"].'" />';
+		$premium = ($user["product"]=="premium")? "Yes":"No";
 
-	$html = "<img src='".$user["images"][0]["url"]."' border='0' align='left' />";
-	$html.= "<a href='".$user["external_urls"]["spotify"]."'>";
-	$html.= "<h1>".$user["display_name"].$flag."</h1>";
-	$html.= '</a>';
-	$html.= "<b>E-Mail:</b> ".$user["email"]. "\n";
-	$html.= "<b>Follower:</b> ".$user["followers"]["total"]. "\n";
-	$html.= "<b>Is Premium:</b> " . ($user["product"]=="premium")? "Yes":"No";
-	$html.= "\n";
-	$html.= "<a href='".$user["uri"]."'>Find in spotify</a>\n";
-	$html.= "<hr>";
+		$html = "<img src='".$user["images"][0]["url"]."' border='0' align='left' />";
+		$html.= "<a href='".$user["external_urls"]["spotify"]."'>";
+		$html.= "<h1>".$user["display_name"].$flag."</h1>";
+		$html.= '</a>';
+		$html.= "<b>E-Mail:</b> ".$user["email"]. "\n";
+		$html.= "<b>Follower:</b> ".$user["followers"]["total"]. "\n";
+		$html.= "<b>Is Premium:</b> " . $premium;
+		$html.= "\n";
+		$html.= "<a href='".$user["uri"]."'>Find in spotify</a>\n";
+		$html.= "<hr>";
 
-	echo $html;
-	print_r($user);
+		echo $html;
+	}
+
+//	print_r($user);
 }
 ?>
 

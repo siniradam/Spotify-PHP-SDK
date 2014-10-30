@@ -19,7 +19,7 @@ Under MIT licence
 ************2014*******
 * Spotify PHP Class ***
 ** Free Distribution **
----- v1.0 -------------
+---- v1.1 -------------
 **********************/
 
 
@@ -27,6 +27,8 @@ class spotifly {
 
 //	protected $currenturl = "http://".$_SERVER["SERVER_NAME"]."/callback";
 	protected $settings;
+	static $version = "v1";
+	static $baseurl = "https://api.spotify.com/";
 
 	function __construct($config){
 
@@ -106,21 +108,34 @@ class spotifly {
 		return $auth;
 	}
 
-	function refreshToken($refreshToken){
-		$tokenurl = "https://accounts.spotify.com/api/token";
-		$query = array(
-			"grant_type"	=>	"refresh_token",
-			"refresh_token"	=>	$refreshToken
-		);
-		$header = array("Authorization: ". base64_encode($this->settings["clientid"].":".$this->settings["clientsecret"]));
-		$refresh = postData($tokenurl, $query, $header);
+	function refreshToken($refreshToken = NULL){
+		$refreshToken = ($refreshToken == NULL && isset($_SESSION["spotify"]["refresh_token"]))? $_SESSION["spotify"]["refresh_token"]: NULL;
+
+		if($refreshToken==NULL){
+			$refresh = array("error"=>"There is no refresh token");
+		}else{
+			$tokenurl = "https://accounts.spotify.com/api/token";
+			$query = array(
+				"grant_type"	=>	"refresh_token",
+				"refresh_token"	=>	$refreshToken
+			);
+			$header = array("Authorization: Basic ". base64_encode($this->settings["clientid"].":".$this->settings["clientsecret"]));
+			$refresh = $this->postData($tokenurl, $query, $header);
+
+			if(isset($refresh["access_token"])){
+				$_SESSION["spotify"]["access_token"] = $refresh["access_token"];
+			}
+
+		}
 
 		return $refresh;
 	}
 
+
+
 	function getUser($token=NULL){
 		$usertoken = (isset($token)) ? $token : $_SESSION["spotify"]["access_token"];
-		$url = "https://api.spotify.com/v1/me";
+		$url = self::$baseurl . self::$version . "/me";
 		$header = array("Authorization: Bearer ".$usertoken);
 
 		$user = $this->postData($url,NULL,$header);
@@ -128,7 +143,31 @@ class spotifly {
 	}
 
 
-	function postData($url,$query=NULL,$headers=NULL){
+	function endPointData($endpoint, $params=NULL, $token=NULL){
+		$usertoken = (isset($token)) ? $token : $_SESSION["spotify"]["access_token"];
+		$header = ($this->isOAuthRequired($endpoint))? array("Authorization: Bearer ".$usertoken) : NULL;
+		$querystring = (isset($params))? "?".$params:"";
+
+		$url = self::$baseurl . self::$version . "/".$endpoint.$querystring;
+
+		$endpoint = $this->postData($url, NULL, $header);
+
+		return $endpoint;
+	}
+
+	function isOAuthRequired($endpoint){
+
+		$OAuthRequiredList = array("browse","me","users");
+		$endpoint = (strpos($endpoint, "/") === false)? $endpoint : explode("/", $endpoint)[0];
+
+		return in_array($endpoint, $OAuthRequiredList);
+
+	}
+
+
+
+	function postData($url, $query=NULL, $headers=NULL){
+
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 30);
 		curl_setopt($curl, CURLOPT_URL, $url);
