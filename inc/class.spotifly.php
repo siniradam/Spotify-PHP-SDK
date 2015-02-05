@@ -19,7 +19,7 @@ Under MIT licence
 ************2014*******
 * Spotify PHP Class ***
 ** Free Distribution **
----- v1.1 -------------
+---- v1.2 -------------
 **********************/
 
 
@@ -142,14 +142,40 @@ class spotifly {
 		return $user;
 	}
 
+	function getTrack($id){
+		return $this->endPointData("tracks/".$id);
+	}
+
+	function getAlbum($id){
+		return $this->endPointData("albums/".$id);
+	}
+
+
+	function search($item,$type,$limit=50){
+		$params = array(
+			"q"		=>$item,
+			"type"	=>$type, //Values are: album, artist, playlist, track
+			"limit"	=>$limit
+		);
+
+		return $this->endPointData("search", $params);
+	}
+
 
 	function endPointData($endpoint, $params=NULL, $token=NULL){
-		$usertoken = (isset($token)) ? $token : $_SESSION["spotify"]["access_token"];
-		$header = ($this->isOAuthRequired($endpoint))? array("Authorization: Bearer ".$usertoken) : NULL;
-		$querystring = (isset($params))? "?".$params:"";
+		if($this->isOAuthRequired($endpoint)){
+			$usertoken = (isset($token)) ? $token : is($_SESSION["spotify"]["access_token"]);
+			$header = array("Authorization: Bearer ".$usertoken);
+		}else{
+			$header = NULL;			
+		}
+
+		$querystring = "?";
+		if(isset($params)){
+			$querystring.= is_array($params)? http_build_query($params):$params;
+		}
 
 		$url = self::$baseurl . self::$version . "/".$endpoint.$querystring;
-
 		$endpoint = $this->postData($url, NULL, $header);
 
 		return $endpoint;
@@ -157,8 +183,13 @@ class spotifly {
 
 	function isOAuthRequired($endpoint){
 
-		$OAuthRequiredList = array("browse","me","users");
-		$endpoint = (strpos($endpoint, "/") === false)? $endpoint : explode("/", $endpoint)[0];
+		$OAuthRequiredList = array("browse","me","users",);
+		if(strpos($endpoint, "/") !== false){//PHP 5.3
+			$endpoint = explode("/", $endpoint);
+			$endpoint = $endpoint[0];
+		}
+
+//		$endpoint = (strpos($endpoint, "/") === false)? $endpoint : explode("/", $endpoint)[0]; //PHP 5.5
 
 		return in_array($endpoint, $OAuthRequiredList);
 
@@ -186,7 +217,7 @@ class spotifly {
 		if ($result = curl_exec($curl)){
 			return json_decode($result,true);
 		}else{
-			return 'Curl error: ' . curl_error($curl);
+			return array("error"=>'Curl error: ' . curl_error($curl));
 		}
 	}
 
