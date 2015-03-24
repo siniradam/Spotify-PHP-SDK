@@ -19,7 +19,7 @@ Under MIT licence
 ************2014*******
 * Spotify PHP Class ***
 ** Free Distribution **
----- v1.2 -------------
+---- v1.3 -------------
 **********************/
 
 
@@ -148,6 +148,13 @@ class spotifly {
 
 	function getAlbum($id){
 		return $this->endPointData("albums/".$id);
+	}
+
+	function createPlaylist($userid,$name,$isPublic=true){
+		//EDIT // /users/{user_id}/playlists/{playlist_id}/tracks
+		$endpoint = "/users/".$userid."/playlists";
+		$params = array("name" => $name, "public" => $isPublic);
+		$this->endPointData($endpoint,$params);
 	}
 
 
