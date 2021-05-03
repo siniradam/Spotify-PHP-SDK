@@ -1,3 +1,9 @@
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/) 
+[![deprecated](http://badges.github.io/stability-badges/dist/deprecated.svg)](http://github.com/badges/stability-badges)
+Project is no longer maintained
+
+
+
 #Spotifly#
 ## A Simple PHP Spotify SDK ##
 You can get spotify authentication with this simple php library.
